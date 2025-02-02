@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terror Analogico</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', Courier, monospace;
+            color: white;
+        }
+
+        #m {
+            font-size: 200px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: 0.1s ease;
+        }
+
+        #m.dark {
+            color: black;
+        }
+
+        #m.moving {
+            animation: bounce 4s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translate(-50%, -50%) translateX(-40vw);
+            }
+            50% {
+                transform: translate(-50%, -50%) translateX(40vw);
+            }
+        }
+
+        .morse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px;
+            color: white;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="m" class="moving">M</div>
+    <div id="morse" class="morse">- .- .-.. .. / .--. .- -. ---</div>
+
+    <script>
+        let mElement = document.getElementById("m");
+        let morseElement = document.getElementById("morse");
+        let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let beepDuration = 0.1; // Duración del pitido en segundos
+        let beepFrequency = 1000; // Frecuencia del pitido
+
+        // Función para crear y reproducir el pitido
+        function playBeep() {
+            let oscillator = audioContext.createOscillator();
+            let gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(beepFrequency, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + beepDuration);
+        }
+
+        // Función para reproducir el código morse
+        function playMorseCode() {
+            let morseCode = "- .- .-.. .. / .--. .- -. ---".split('');
+            let index = 0;
+
+            let interval = setInterval(() => {
+                if (index < morseCode.length) {
+                    if (morseCode[index] === '.') {
+                        playBeep();
+                    } else if (morseCode[index] === '-') {
+                        playBeep();
+                    }
+                    index++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 300);
+        }
+
+        // Función para oscurecer la "M" a medida que rebota
+        let darknessLevel = 0;
+        function darkenM() {
+            if (darknessLevel < 1) {
+                darknessLevel += 0.1;
+                mElement.style.filter = `brightness(${1 - darknessLevel})`;
+            } else {
+                clearInterval(darkeningInterval);
+                mElement.classList.remove('moving');
+                mElement.classList.add('dark');
+                morseElement.style.display = 'block'; // Muestra el texto en morse
+                playMorseCode(); // Reproduce el código morse
+            }
+        }
+
+        // Inicia el proceso de oscurecer la "M"
+        let darkeningInterval = setInterval(darkenM, 400);
+
+    </script>
+</body>
+</html>
